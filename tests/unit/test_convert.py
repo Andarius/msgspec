@@ -1491,6 +1491,13 @@ class TestTypedDict:
             convert(GetItemObj(a=[GetItemObj(b="bad")]), Ex)
         assert "Expected `int`, got `str` - at `$.a[0].b`" == str(rec.value)
 
+    def test_typeddict_mapping_ignores_attributes(self):
+        class Ex(TypedDict, total=False):
+            keys: int
+            items: int
+
+        assert convert(GetItemObj(keys=1), Ex) == {"keys": 1}
+
     def test_typeddict_mapping_getitem_error_propagates(self):
         class Bad(GetItemObj):
             def __getitem__(self, key):
