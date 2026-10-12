@@ -1473,9 +1473,10 @@ class TestTypedDict:
         x2 = {"a": 1, "b": "two"}
         assert convert(dictcls(x2), Ex) == x2
 
-        with pytest.raises(ValidationError) as rec:
-            convert(dictcls({"b": "two"}), Ex)
-        assert "Object missing required field `a`" == str(rec.value)
+        for msg in [{"b": "two"}, {"b": "two", "c": "extra"}]:
+            with pytest.raises(ValidationError) as rec:
+                convert(dictcls(msg), Ex)
+            assert "Object missing required field `a`" == str(rec.value)
 
     def test_typeddict_nested_mapping(self):
         class Inner(TypedDict):
