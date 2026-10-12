@@ -1509,6 +1509,23 @@ class TestTypedDict:
         with pytest.raises(ZeroDivisionError):
             convert(Bad(), Ex)
 
+    def test_typeddict_mapping_incomplete_recursive_type(self):
+        class A(TypedDict, total=False):
+            child: "B"
+            bad: list | tuple
+
+        class B(TypedDict):
+            parent: A
+
+        A.__annotations__["child"] = B
+
+        # A fails to build, but B keeps a reference to A's partial info
+        with pytest.raises(TypeError, match="not supported"):
+            convert({}, A)
+
+        with pytest.raises(TypeError, match="TypedDict type is incomplete"):
+            convert(GetItemObj(parent=GetItemObj()), B)
+
 
 class TestDataclass:
     @pytest.mark.parametrize("slots", [False, True])

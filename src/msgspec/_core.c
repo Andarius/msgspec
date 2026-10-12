@@ -22353,11 +22353,17 @@ convert_mapping_to_typeddict(
     if (out == NULL) goto error;
 
     TypedDictInfo *info = TypeNode_get_typeddict_info(type);
+    /* -1 if a recursive TypedDict cached this info before a failed init */
+    if (info->nrequired < 0) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "TypedDict type is incomplete: a recursively referenced type failed to initialize"
+        );
+        goto error;
+    }
     Py_ssize_t nrequired = 0;
     for (Py_ssize_t i = 0; i < Py_SIZE(info); i++) {
         PyObject *field = info->fields[i].key;
-        /* NULL if a recursive TypedDict cached this info before a failed init */
-        if (field == NULL) continue;
         TypeNode *field_type = info->fields[i].type;
         /* Item lookup only, to avoid collisions with mapping methods. */
         PyObject *item = PyObject_GetItem(obj, field);
