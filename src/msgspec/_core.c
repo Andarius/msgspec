@@ -22364,7 +22364,9 @@ convert_mapping_to_typeddict(
     Py_ssize_t nrequired = 0;
     for (Py_ssize_t i = 0; i < Py_SIZE(info); i++) {
         PyObject *field = info->fields[i].key;
+        assert(field != NULL);
         TypeNode *field_type = info->fields[i].type;
+        assert(field_type != NULL);
         /* Item lookup only, to avoid collisions with mapping methods. */
         PyObject *item = PyObject_GetItem(obj, field);
         if (item == NULL) {
