@@ -1746,6 +1746,15 @@ ensure_is_finite_numeric(PyObject *val, const char *param, bool positive) {
     double x;
     if (PyLong_CheckExact(val)) {
         x = PyLong_AsDouble(val);
+        if (x == -1.0 && PyErr_Occurred()) {
+            PyErr_Clear();
+            PyErr_Format(
+                PyExc_ValueError,
+                "`%s` is out of range, %R is not representable as a float",
+                param, val
+            );
+            return false;
+        }
     }
     else if (PyFloat_CheckExact(val)) {
         x = PyFloat_AS_DOUBLE(val);
@@ -3433,7 +3442,7 @@ TypeNode_get_traverse_ranges(
                 MS_TYPE_INTENUM | MS_TYPE_INTLITERAL |
                 MS_TYPE_ENUM | MS_TYPE_STRLITERAL |
                 MS_TYPE_TYPEDDICT | MS_TYPE_DATACLASS |
-                MS_TYPE_NAMEDTUPLE
+                MS_TYPE_NAMEDTUPLE | MS_CONSTR_STR_REGEX
             )
         );
         /* Number of typenode details */
@@ -8513,13 +8522,13 @@ Struct_rich_repr(PyObject *self, PyObject *args) {
     for (Py_ssize_t i = 0; i < nfields; i++) {
         PyObject *field = PyTuple_GET_ITEM(fields, i);
         PyObject *val = Struct_get_index(self, i);
+        if (val == NULL) goto error;
 
         if (i >= nunchecked) {
             PyObject *default_val = PyTuple_GET_ITEM(defaults, i - nunchecked);
             if (is_default(val, default_val)) continue;
         }
 
-        if (val == NULL) goto error;
         PyObject *part = PyTuple_Pack(2, field, val);
         if (part == NULL) goto error;
         int status = PyList_Append(out, part);
